@@ -1,7 +1,16 @@
 ﻿using System.Text.Json;
 
-string swaggerFilePath = "swagger.json"; // Path to Swagger JSON file
-string ocelotFilePath = "ocelot.json"; // Output Ocelot config file
+Console.Write("Enter Swagger JSON file path: ");
+string swaggerFilePath = Console.ReadLine()?.Trim();
+
+Console.Write("Enter Ocelot JSON output file path: ");
+string ocelotFilePath = Console.ReadLine()?.Trim();
+
+if (string.IsNullOrEmpty(swaggerFilePath) || string.IsNullOrEmpty(ocelotFilePath))
+{
+    Console.WriteLine("Invalid input! Both file paths are required.");
+    return;
+}
 
 if (!File.Exists(swaggerFilePath))
 {
@@ -36,7 +45,7 @@ var ocelotConfig = new OcelotConfig
 var ocelotJson = JsonSerializer.Serialize(ocelotConfig, new JsonSerializerOptions { WriteIndented = true });
 File.WriteAllText(ocelotFilePath, ocelotJson);
 
-Console.WriteLine("Ocelot configuration generated successfully!");
+Console.WriteLine($"Ocelot configuration generated successfully! Saved at: {ocelotFilePath}");
 
 // Models
 record SwaggerDocument(Dictionary<string, Dictionary<string, object>> Paths);
