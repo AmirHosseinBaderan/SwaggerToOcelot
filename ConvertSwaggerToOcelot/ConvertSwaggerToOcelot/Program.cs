@@ -8,16 +8,32 @@ string GetValidInput(string prompt)
         Console.Write(prompt);
         input = Console.ReadLine()?.Trim();
         if (string.IsNullOrEmpty(input))
-        {
             Console.WriteLine("Input cannot be empty. Please try again.");
-        }
     } while (string.IsNullOrEmpty(input));
 
     return input;
 }
 
+int GetValidIntInput(string prompt)
+{
+    string? input;
+    do
+    {
+        Console.Write(prompt);
+        input = Console.ReadLine()?.Trim();
+        if (string.IsNullOrEmpty(input))
+            Console.WriteLine("Input cannot be empty. Please try again.");
+    } while (string.IsNullOrEmpty(input));
+
+    _ = int.TryParse(input, out int output);
+    return output;
+}
+
 string swaggerFilePath = GetValidInput("Enter Swagger JSON file path: ");
 string ocelotFilePath = GetValidInput("Enter Ocelot JSON output file path: ");
+string hostName = GetValidInput("Enter host name : ");
+string schema = GetValidInput("Enter Schema : ");
+var port = GetValidIntInput("Enter port : ");
 
 if (!File.Exists(swaggerFilePath))
 {
@@ -39,8 +55,8 @@ if (swaggerDoc?.Paths == null)
 OcelotConfig ocelotConfig = new([.. swaggerDoc.Paths.Select(p => new OcelotRoute(
 
     DownstreamPathTemplate: p.Key,
-    DownstreamScheme: "http",
-    DownstreamHostAndPorts: [new HostPort(Host: "backend-service", Port: 8080)],
+    DownstreamScheme: schema,
+    DownstreamHostAndPorts: [new HostPort(Host: hostName, Port: port)],
     UpstreamPathTemplate: p.Key,
     UpstreamHttpMethod: [.. p.Value.Keys]
 ))]);
