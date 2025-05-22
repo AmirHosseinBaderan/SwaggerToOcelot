@@ -1,16 +1,23 @@
 ﻿using System.Text.Json;
 
-Console.Write("Enter Swagger JSON file path: ");
-string swaggerFilePath = Console.ReadLine()?.Trim();
-
-Console.Write("Enter Ocelot JSON output file path: ");
-string ocelotFilePath = Console.ReadLine()?.Trim();
-
-if (string.IsNullOrEmpty(swaggerFilePath) || string.IsNullOrEmpty(ocelotFilePath))
+string GetValidInput(string prompt)
 {
-    Console.WriteLine("Invalid input! Both file paths are required.");
-    return;
+    string? input;
+    do
+    {
+        Console.Write(prompt);
+        input = Console.ReadLine()?.Trim();
+        if (string.IsNullOrEmpty(input))
+        {
+            Console.WriteLine("Input cannot be empty. Please try again.");
+        }
+    } while (string.IsNullOrEmpty(input));
+
+    return input;
 }
+
+string swaggerFilePath = GetValidInput("Enter Swagger JSON file path: ");
+string ocelotFilePath = GetValidInput("Enter Ocelot JSON output file path: ");
 
 if (!File.Exists(swaggerFilePath))
 {
@@ -29,17 +36,14 @@ if (swaggerDoc?.Paths == null)
 }
 
 // Convert paths to Ocelot routes
-var ocelotConfig = new OcelotConfig
-{
-    Routes = swaggerDoc.Paths.Select(p => new OcelotRoute
-    {
-        DownstreamPathTemplate = p.Key,
-        DownstreamScheme = "http",
-        DownstreamHostAndPorts = new[] { new HostPort { Host = "backend-service", Port = 8080 } },
-        UpstreamPathTemplate = p.Key,
-        UpstreamHttpMethod = p.Value.Keys.ToArray()
-    }).ToList()
-};
+OcelotConfig ocelotConfig = new([.. swaggerDoc.Paths.Select(p => new OcelotRoute(
+
+    DownstreamPathTemplate: p.Key,
+    DownstreamScheme: "http",
+    DownstreamHostAndPorts: [new HostPort(Host: "backend-service", Port: 8080)],
+    UpstreamPathTemplate: p.Key,
+    UpstreamHttpMethod: [.. p.Value.Keys]
+))]);
 
 // Write Ocelot JSON
 var ocelotJson = JsonSerializer.Serialize(ocelotConfig, new JsonSerializerOptions { WriteIndented = true });
